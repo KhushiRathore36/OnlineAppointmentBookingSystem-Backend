@@ -75,7 +75,7 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- ✅ EUREKA CLIENT -->
+        <!-- EUREKA CLIENT -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
@@ -127,6 +127,10 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.springframework.boot</groupId>
+          <artifactId>spring-boot-starter-data-redis</artifactId>
         </dependency>
 
         <dependency>

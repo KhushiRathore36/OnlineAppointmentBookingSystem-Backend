@@ -1,5 +1,6 @@
 package com.appointment.auth_service.security;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -29,29 +30,38 @@ public class JwtUtil {
     }
 
     public String extractEmail(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(getKey())
-                .build()
-                .parseClaimsJws(token)
-                .getBody()
-                .getSubject();
+        return extractAllClaims(token).getSubject();
     }
 
     public String extractRole(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(getKey())
-                .build()
-                .parseClaimsJws(token)
-                .getBody()
-                .get("role", String.class);
+        return extractAllClaims(token).get("role", String.class);
+    }
+
+    public Date extractExpiration(String token) {
+        return extractAllClaims(token).getExpiration();
+    }
+
+    public long getExpirationTime(String token) {
+        Date expiration = extractExpiration(token);
+        long remainingTime = expiration.getTime() - System.currentTimeMillis();
+
+        return Math.max(remainingTime, 0);
     }
 
     public boolean validateToken(String token) {
         try {
-            Jwts.parserBuilder().setSigningKey(getKey()).build().parseClaimsJws(token);
-            return true;
+            extractAllClaims(token);
+            return !extractExpiration(token).before(new Date());
         } catch (Exception e) {
             return false;
         }
+    }
+
+    private Claims extractAllClaims(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(getKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
     }
 }

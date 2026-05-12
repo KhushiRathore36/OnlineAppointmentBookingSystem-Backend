@@ -6,6 +6,7 @@ import com.appointment.auth_service.entity.User;
 import com.appointment.auth_service.repository.UserRepository;
 import com.appointment.auth_service.security.JwtUtil;
 import com.appointment.auth_service.service.AuthService;
+import com.appointment.auth_service.service.TokenBlacklistService;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -18,13 +19,17 @@ public class AuthController {
     private final AuthService authService;
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
+    private final TokenBlacklistService tokenBlacklistService;
+   
+
 
     public AuthController(AuthService authService,
                           UserRepository userRepository,
-                          JwtUtil jwtUtil) {
+                          JwtUtil jwtUtil,TokenBlacklistService tokenBlacklistService) {
         this.authService = authService;
         this.userRepository = userRepository;
         this.jwtUtil = jwtUtil;
+        this.tokenBlacklistService=tokenBlacklistService;
     }
 
     @PostMapping("/register")
@@ -97,5 +102,20 @@ public class AuthController {
         );
 
         return ResponseEntity.ok(new AuthResponse(token, "OAuth login successful"));
+    }
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(@RequestHeader("Authorization") String authHeader) {
+
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return ResponseEntity.badRequest().body("Invalid Authorization header");
+        }
+
+        String token = authHeader.substring(7);
+
+        long expiryTime = jwtUtil.getExpirationTime(token);
+
+        tokenBlacklistService.blacklistToken(token, expiryTime);
+
+        return ResponseEntity.ok("Logout successful");
     }
 }
