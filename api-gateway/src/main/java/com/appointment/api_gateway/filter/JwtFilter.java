@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
@@ -23,7 +24,10 @@ public class JwtFilter implements GlobalFilter {
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
 
         String path = exchange.getRequest().getURI().getPath();
+        HttpMethod method = exchange.getRequest().getMethod();
+
         System.out.println("Gateway path = " + path);
+        System.out.println("Gateway method = " + method);
 
         if (isPublicPath(path)) {
             System.out.println("Public endpoint hit, skipping JWT filter");
@@ -52,15 +56,30 @@ public class JwtFilter implements GlobalFilter {
             String role = claims.get("role", String.class);
             System.out.println("Role from token = " + role);
 
-            if (path.startsWith("/providers") && !"ADMIN".equals(role) && !"PROVIDER".equals(role)) {
+            
+            if (path.startsWith("/providers")
+                    && method == HttpMethod.DELETE
+                    && !"ADMIN".equals(role)) {
                 return forbidden(exchange);
             }
 
-            if (path.startsWith("/records") && !"PROVIDER".equals(role)) {
+         
+            if (path.startsWith("/providers")
+                    && method != HttpMethod.DELETE
+                    && !"ADMIN".equals(role)
+                    && !"PROVIDER".equals(role)) {
                 return forbidden(exchange);
             }
 
-            if (path.startsWith("/reviews") && !"PATIENT".equals(role)) {
+            
+            if (path.startsWith("/records")
+                    && !"PROVIDER".equals(role)) {
+                return forbidden(exchange);
+            }
+
+        
+            if (path.startsWith("/reviews")
+                    && !"PATIENT".equals(role)) {
                 return forbidden(exchange);
             }
 
